@@ -1,15 +1,16 @@
-name: "roam-to-git tests.py"
+name: "Roam Research backup"
 
 on:
   push:
     branches:
       - master
-      - dev 
+  schedule:
+    -   cron: "0 * * * *"
 
 jobs:
-  test:
+  backup:
     runs-on: ubuntu-latest
-    name: Test
+    name: Backup
     timeout-minutes: 15
     steps:
       -   uses: actions/checkout@v2
@@ -20,7 +21,15 @@ jobs:
 
       -   name: Setup dependencies
           run: |
-            pip install -r requirements.txt
-            pip install mypy
+            pip install git+https://github.com/MatthieuBizien/roam-to-git.git
       -   name: Run backup
-          run: ./tests.py
+          run: roam-to-git --skip-git .
+          env:
+            ROAMRESEARCH_USER: ${{ secrets.ROAMRESEARCH_USER }}
+            ROAMRESEARCH_PASSWORD: ${{ secrets.ROAMRESEARCH_PASSWORD }}
+            ROAMRESEARCH_DATABASE: ${{ secrets.ROAMRESEARCH_DATABASE }}
+
+      -   name: Commit changes
+          uses: elstudio/actions-js-build/commit@v3
+          with:
+            commitMessage: Automated snapshot
